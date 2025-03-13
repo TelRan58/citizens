@@ -8,7 +8,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CitizensImpl implements Citizens {
-    private static Comparator<Person> lastNameComparator = (p1, p2) -> p1.getLastName().compareTo(p2.getLastName());
+    private static Comparator<Person> lastNameComparator = (p1, p2) -> {
+        int res = p1.getLastName().compareTo(p2.getLastName());
+        return res != 0 ? res : Integer.compare(p1.getId(), p2.getId());
+    };
     private static Comparator<Person> ageComparator = (p1, p2) -> Integer.compare(p1.getAge(), p2.getAge());
     private List<Person> idCollection;
     private List<Person> lastNameCollection;
@@ -75,40 +78,32 @@ public class CitizensImpl implements Citizens {
         return res;
     }
 
-    // O(n)
+    // O(log(n)) + O(log(n)) + O(1) = O(log(n))
     @Override
     public Iterable<Person> find(String lastName) {
-        List<Person> res = new ArrayList<>();
-        for (Person person : idCollection) {
-            if (lastName.equals(person.getLastName())) {
-                res.add(person);
-            }
-        }
-        return res;
+        Person pattern = new Person(Integer.MIN_VALUE, null, lastName, null);
+        int from = -Collections.binarySearch(lastNameCollection, pattern, lastNameComparator) - 1;
+        pattern = new Person(Integer.MAX_VALUE, null, lastName, null);
+        int to = -Collections.binarySearch(lastNameCollection, pattern, lastNameComparator) - 1;
+        return lastNameCollection.subList(from, to);
     }
 
-    // O(n * log(n))
+    // O(1)
     @Override
     public Iterable<Person> getAllPersonSortedById() {
-        List<Person> res = new ArrayList<>(idCollection);
-        Collections.sort(res);
-        return res;
+        return idCollection;
     }
 
-    // O(n * log(n))
+    // O(1)
     @Override
     public Iterable<Person> getAllPersonSortedByLastName() {
-        List<Person> res = new ArrayList<>(idCollection);
-        Collections.sort(res, lastNameComparator);
-        return res;
+        return lastNameCollection;
     }
 
-    // O(n * log(n))
+    // O(1)
     @Override
     public Iterable<Person> getAllPersonSortedByAge() {
-        List<Person> res = new ArrayList<>(idCollection);
-        Collections.sort(res, ageComparator);
-        return res;
+        return ageCollection;
     }
 
     // O(1)
