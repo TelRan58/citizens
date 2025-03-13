@@ -46,7 +46,7 @@ public class CitizensImpl implements Citizens {
         return true;
     }
 
-    // 3 * O(n)
+    // O(log(n)) + 3 * O(n) = O(n)
     @Override
     public boolean remove(int id) {
         Person victim = find(id);
@@ -56,15 +56,11 @@ public class CitizensImpl implements Citizens {
         return idCollection.remove(victim) && lastNameCollection.remove(victim) && ageCollection.remove(victim);
     }
 
-    // O(n)
+    // O(log(n)) + O(1) = O(log(n))
     @Override
     public Person find(int id) {
-        for (Person person : idCollection) {
-            if (person.getId() == id) {
-                return person;
-            }
-        }
-        return null;
+        int index = Collections.binarySearch(idCollection, new Person(id, null, null, null));
+        return index < 0 ? null : idCollection.get(index);
     }
 
     // O(n)
