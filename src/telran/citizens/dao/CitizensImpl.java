@@ -2,6 +2,7 @@ package telran.citizens.dao;
 
 import telran.citizens.model.Person;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -12,7 +13,10 @@ public class CitizensImpl implements Citizens {
         int res = p1.getLastName().compareTo(p2.getLastName());
         return res != 0 ? res : Integer.compare(p1.getId(), p2.getId());
     };
-    private static Comparator<Person> ageComparator = (p1, p2) -> Integer.compare(p1.getAge(), p2.getAge());
+    private static Comparator<Person> ageComparator = (p1, p2) -> {
+        int res = Integer.compare(p1.getAge(), p2.getAge());
+        return res != 0 ? res : Integer.compare(p1.getId(), p2.getId());
+    };
     private List<Person> idCollection;
     private List<Person> lastNameCollection;
     private List<Person> ageCollection;
@@ -66,16 +70,15 @@ public class CitizensImpl implements Citizens {
         return index < 0 ? null : idCollection.get(index);
     }
 
-    // O(n)
+    // O(log(n)) + O(log(n)) + O(1) = O(log(n))
     @Override
     public Iterable<Person> find(int minAge, int maxAge) {
-        List<Person> res = new ArrayList<>();
-        for (Person person : idCollection) {
-            if (person.getAge() >= minAge && person.getAge() <= maxAge) {
-                res.add(person);
-            }
-        }
-        return res;
+        LocalDate now = LocalDate.now();
+        Person pattern = new Person(Integer.MIN_VALUE, null, null, now.minusYears(minAge));
+        int from = -Collections.binarySearch(ageCollection, pattern, ageComparator) - 1;
+        pattern = new Person(Integer.MAX_VALUE, null, null, now.minusYears(maxAge));
+        int to = -Collections.binarySearch(ageCollection, pattern, ageComparator) - 1;
+        return ageCollection.subList(from, to);
     }
 
     // O(log(n)) + O(log(n)) + O(1) = O(log(n))
