@@ -9,14 +9,20 @@ import java.util.Comparator;
 import java.util.List;
 
 public class CitizensImpl implements Citizens {
-    private static Comparator<Person> lastNameComparator = (p1, p2) -> {
-        int res = p1.getLastName().compareTo(p2.getLastName());
-        return res != 0 ? res : Integer.compare(p1.getId(), p2.getId());
-    };
-    private static Comparator<Person> ageComparator = (p1, p2) -> {
-        int res = Integer.compare(p1.getAge(), p2.getAge());
-        return res != 0 ? res : Integer.compare(p1.getId(), p2.getId());
-    };
+    private static Comparator<Person> lastNameComparator;
+    private static Comparator<Person> ageComparator;
+
+    static {
+        lastNameComparator = (p1, p2) -> {
+            int res = p1.getLastName().compareTo(p2.getLastName());
+            return res != 0 ? res : Integer.compare(p1.getId(), p2.getId());
+        };
+        ageComparator = (p1, p2) -> {
+            int res = Integer.compare(p1.getAge(), p2.getAge());
+            return res != 0 ? res : Integer.compare(p1.getId(), p2.getId());
+        };
+    }
+
     private List<Person> idCollection;
     private List<Person> lastNameCollection;
     private List<Person> ageCollection;
