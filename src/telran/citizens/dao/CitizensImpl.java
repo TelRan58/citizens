@@ -3,14 +3,14 @@ package telran.citizens.dao;
 import telran.citizens.model.Person;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class CitizensImpl implements Citizens {
     private static Comparator<Person> lastNameComparator;
     private static Comparator<Person> ageComparator;
+    private TreeSet<Person> idCollection;
+    private TreeSet<Person> lastNameCollection;
+    private TreeSet<Person> ageCollection;
 
     static {
         lastNameComparator = (p1, p2) -> {
@@ -23,14 +23,10 @@ public class CitizensImpl implements Citizens {
         };
     }
 
-    private List<Person> idCollection;
-    private List<Person> lastNameCollection;
-    private List<Person> ageCollection;
-
     public CitizensImpl() {
-        idCollection = new ArrayList<>();
-        lastNameCollection = new ArrayList<>();
-        ageCollection = new ArrayList<>();
+        idCollection = new TreeSet<>();
+        ageCollection = new TreeSet<>(ageComparator);
+        lastNameCollection = new TreeSet<>(lastNameComparator);
     }
 
     public CitizensImpl(List<Person> citizens) {
@@ -38,63 +34,42 @@ public class CitizensImpl implements Citizens {
         citizens.forEach(p -> add(p));
     }
 
-    // O(log(n)) + O(n) + O(log(n)) + O(n) + O(log(n)) + O(n) = 3*O(log(n)) + 3*O(n) = O(n)
+    // O(log(n))
     @Override
     public boolean add(Person person) {
-        if (person == null) {
-            return false;
-        }
-        int index = Collections.binarySearch(idCollection, person);
-        if (index >= 0) {
-            return false;
-        }
-        index = -index - 1;
-        idCollection.add(index, person);
-        index = Collections.binarySearch(ageCollection, person, ageComparator);
-        index = index >= 0 ? index : -index - 1;
-        ageCollection.add(index, person);
-        index = Collections.binarySearch(lastNameCollection, person, lastNameComparator);
-        index = index >= 0 ? index : -index - 1;
-        lastNameCollection.add(index, person);
-        return true;
+        return person != null && idCollection.add(person) && lastNameCollection.add(person) && ageCollection.add(person);
     }
 
-    // O(log(n)) + 3 * O(n) = O(n)
+    // O(log(n))
     @Override
     public boolean remove(int id) {
-        Person victim = find(id);
-        if (victim == null) {
-            return false;
-        }
-        return idCollection.remove(victim) && lastNameCollection.remove(victim) && ageCollection.remove(victim);
+        Person person = find(id);
+        return person != null && idCollection.remove(person) && lastNameCollection.remove(person) && ageCollection.remove(person);
     }
 
-    // O(log(n)) + O(1) = O(log(n))
+    // O(log(n))
     @Override
     public Person find(int id) {
-        int index = Collections.binarySearch(idCollection, new Person(id, null, null, null));
-        return index < 0 ? null : idCollection.get(index);
+        Person pattern = new Person(id, null, null, null);
+        Person person = idCollection.ceiling(pattern);
+        return pattern.equals(person) ? person : null;
     }
 
-    // O(log(n)) + O(log(n)) + O(1) = O(log(n))
+    // O(log(n))
     @Override
     public Iterable<Person> find(int minAge, int maxAge) {
         LocalDate now = LocalDate.now();
-        Person pattern = new Person(Integer.MIN_VALUE, null, null, now.minusYears(minAge));
-        int from = -Collections.binarySearch(ageCollection, pattern, ageComparator) - 1;
-        pattern = new Person(Integer.MAX_VALUE, null, null, now.minusYears(maxAge));
-        int to = -Collections.binarySearch(ageCollection, pattern, ageComparator) - 1;
-        return ageCollection.subList(from, to);
+        Person from = new Person(idCollection.first().getId() - 1, null, null, now.minusYears(minAge));
+        Person to = new Person(idCollection.last().getId() + 1, null, null, now.minusYears(maxAge));
+        return ageCollection.subSet(from, to);
     }
 
-    // O(log(n)) + O(log(n)) + O(1) = O(log(n))
+    // O(log(n))
     @Override
     public Iterable<Person> find(String lastName) {
-        Person pattern = new Person(Integer.MIN_VALUE, null, lastName, null);
-        int from = -Collections.binarySearch(lastNameCollection, pattern, lastNameComparator) - 1;
-        pattern = new Person(Integer.MAX_VALUE, null, lastName, null);
-        int to = -Collections.binarySearch(lastNameCollection, pattern, lastNameComparator) - 1;
-        return lastNameCollection.subList(from, to);
+        Person from = new Person(Integer.MIN_VALUE, null, lastName, null);
+        Person to = new Person(Integer.MAX_VALUE, null, lastName, null);
+        return lastNameCollection.subSet(from, to);
     }
 
     // O(1)
